@@ -1,158 +1,136 @@
 import React, { Component } from 'react';
-import { AppRegistry, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  AppRegistry,
+  FlatList,
+  Header,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableHighlight,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import {
+  createBottomTabNavigator
+} from 'react-navigation';
 import { Camera, Permissions } from 'expo';
+import CameraPanel from "./components/CameraPanel";
+import { AntDesign, Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import StatusBar from "./components/StatusBar";
+import SearchBar from "./components/SearchBar";
 
-const styles = StyleSheet.create({
-    label : {
-      padding : 100,
-      color: 'red'
+class AtmComponent extends Component {
+
+  constructor(props){
+    super(props);
+    this.state ={ isLoading: true}
+  }
+
+  componentDidMount() {
+
+    return fetch('https://api.hsbc.com/open-banking/v2.2/branches')
+      .then((response) => response.json())
+      .then((responseJson) => {
+
+        this.setState({
+          isLoading: false,
+          dataSource: responseJson.data,
+        }, function(){
+
+        });
+
+      })
+      .catch((error) =>{
+        console.error(error);
+      });
+  }
+
+  render() {
+    if(this.state.isLoading){
+     return(
+       <View style={{flex: 1, padding: 20}}>
+         <ActivityIndicator/>
+       </View>
+     )
+   }
+
+   return(
+     <View style={{flex: 1, paddingTop:20}}>
+
+       <FlatList
+         data={this.state.dataSource[0].Brand[0].Branch}
+         renderItem={({item}) => <Text>{item.Name}</Text>}
+         keyExtractor={item => item.Identification } />
+     </View>
+   );
+  }
+}
+
+class HomeScreen extends Component {
+    render() {
+      return(
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={{ flex: 1 }}>
+            <StatusBar backgroundColor="#2EBD6B" barStyle="light-content" />
+
+            <View style={{ backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#CCCCCC' }}>
+              <SearchBar />
+            </View>
+          </View>
+        </SafeAreaView>
+      );
     }
+}
+
+export default createBottomTabNavigator ({
+    Home : {
+      screen: HomeScreen,
+      navigationOptions: {
+        tabBarLabel: 'HOME',
+        tabBarIcon : ({ tintColor })=>(
+           <Ionicons name="ios-search" size={32} color={tintColor} />
+        )
+      }
+    },
+    ATM: {
+      screen: AtmComponent,
+      navigationOptions: {
+        tabBarLabel: 'ATM',
+        tabBarIcon: ({ tintColor })=> (
+          <MaterialIcons name="local-atm" size={32} color={tintColor} />
+        )
+      }
+    },
+    Messaging: {
+      screen: HomeScreen,
+      navigationOptions: {
+          tabBarLabel: 'MESSAGING',
+          tabBarIcon: ({ tintColor }) => (
+            <Ionicons name="ios-mail" size={32} color={tintColor} />
+          )
+      }
+    },
+    Camera: {
+      screen: CameraPanel,
+      navigationOptions: {
+          tabBarLabel: 'CAMERA',
+          tabBarIcon: ({ tintColor }) => (
+            <Feather name="camera" size={32} color={tintColor} />
+          )
+      }
+    },
+    Alert: {
+      screen: HomeScreen,
+      navigationOptions: {
+        tabBarLabel: 'ALERT',
+        tabBarIcon: ({ tintColor }) => (
+          <Ionicons name="ios-alert" size={32} color={tintColor} />
+        )
+      }
+    },
 });
 
-class Greeting extends Component {
-  render() {
-    return (
-      <View style={{alignItems: 'center'}}>
-        <Text>Hello {this.props.name}!</Text>
-      </View>
-    );
-  }
-}
 
-class Salute extends Component {
-  render() {
-    return (
-      <View>
-        <Text>Good bye, {this.props.name}!</Text>
-      </View>
-    );
-  }
-}
-
-class MyPanel extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  state = {
-      hasCameraPermission: null,
-      type: Camera.Constants.Type.back,
-    };
-
-  async componentDidMount() {
-    const { status } = await Permissions.askAsync(Permissions.CAMERA);
-    this.setState({ hasCameraPermission: status === 'granted' });
-  }
-
-  render() {
-    const { hasCameraPermission } = this.state;
-    if (hasCameraPermission === null) {
-      return <View><Text>NULL</Text></View>;
-    } else if (hasCameraPermission === false) {
-      return <Text>No access to camera</Text>;
-    } else {
-      return (
-        <View style={{ flex: 1 }}>
-          <Camera style={{ flex: 1 }} type={this.state.type}>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: 'transparent',
-                flexDirection: 'row',
-              }}>
-              <TouchableOpacity
-                style={{
-                  flex: 0.1,
-                  alignSelf: 'flex-end',
-                  alignItems: 'center',
-                }}
-                onPress={() => {
-                  this.setState({
-                    type: this.state.type === Camera.Constants.Type.back
-                      ? Camera.Constants.Type.front
-                      : Camera.Constants.Type.back,
-                  });
-                }}>
-                <Text
-                  style={{ fontSize: 18, marginBottom: 10, color: 'white' }}>
-                  {' '}Flip{' '}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Camera>
-        </View>
-      );
-    }
-  }
-}
-
-export default class LotsOfGreetings extends Component {
-
-  state = {
-      hasCameraPermission: null,
-      type: Camera.Constants.Type.back,
-    };
-
-  async componentDidMount() {
-    const { status } = await Permissions.askAsync(Permissions.CAMERA);
-    this.setState({ hasCameraPermission: status === 'granted' });
-  };
-
-  render() {
-    const { hasCameraPermission } = this.state;
-    if (hasCameraPermission === null) {
-      return <View><Text>null</Text></View>;
-    } else if (hasCameraPermission === false) {
-      return <Text>No access to camera</Text>;
-    } else {
-      return (
-        <View style={{ flex: 1 }}>
-          <Camera style={{ flex: 1 }} type={this.state.type}>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: 'transparent',
-                flexDirection: 'row',
-              }}>
-              <TouchableOpacity
-                style={{
-                  flex: 0.1,
-                  alignSelf: 'flex-end',
-                  alignItems: 'center',
-                }}
-                onPress={() => {
-                  this.setState({
-                    type: this.state.type === Camera.Constants.Type.back
-                      ? Camera.Constants.Type.front
-                      : Camera.Constants.Type.back,
-                  });
-                }}>
-                <Text
-                  style={{ fontSize: 18, marginBottom: 10, color: 'white' }}>
-                  {' '}Flip{' '}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Camera>
-        </View>
-      );
-    }
-  }
-  /*
-  render() {
-    return (
-
-      <View style={{alignItems: 'center'}}>
-        <Greeting name='Rexxar' />
-        <Greeting name='Jaina' />
-        <Greeting name='Valeera' />
-        <Salute name='World' />
-        <MyPanel />
-      </View>
-    );
-  }
-  */
-}
-
-// skip this line if using Create React Native App
-//AppRegistry.registerComponent('AwesomeProject', () => LotsOfGreetings);
+AppRegistry.registerComponent('AwesomeProject', () => MyApp);
