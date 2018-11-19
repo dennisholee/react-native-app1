@@ -2,18 +2,12 @@ import React, { Component } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Camera, Permissions } from 'expo';
 
-/*
-To use:
-<View style={{ flex: 1 }}>
-  <CameraPanel></CameraPanel>
-</View>
-*/
 class CameraPanel extends Component {
 
   state = {
       hasCameraPermission: null,
       type: Camera.Constants.Type.back,
-    };
+  };
 
   async componentDidMount() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);

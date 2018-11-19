@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import {
   ActivityIndicator,
   AppRegistry,
+  Button,
   FlatList,
   Header,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,78 +15,62 @@ import {
   View
 } from 'react-native';
 import {
-  createBottomTabNavigator
+  createBottomTabNavigator,
+  SwitchNavigator,
 } from 'react-navigation';
-import { Camera, Permissions } from 'expo';
+import {
+  Camera,
+  MapView,
+  Permissions
+} from 'expo';
+
+import * as firebase from 'firebase';
+import { compose, withHandlers, withProps, withState, withStateHandlers } from "recompose";
 import CameraPanel from "./components/CameraPanel";
 import { AntDesign, Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import StatusBar from "./components/StatusBar";
 import SearchBar from "./components/SearchBar";
+import AtmPanel from './components/AtmPanel';
+import withFormData from './components/withFormData';
+import MyForm from './components/MyForm';
+import {
+  ScrollPanel
+} from './components/ScrollPanel';
 
-class AtmComponent extends Component {
+import HomeScreen from './screens/HomeScreen';
+import LoadingScreen from './screens/LoadingScreen';
+import SignupScreen from './screens/SignupScreen';
+import LoginScreen from './screens/LoginScreen';
+import MapScreen from './screens/MapScreen';
 
-  constructor(props){
-    super(props);
-    this.state ={ isLoading: true}
-  }
+import { createStore } from 'redux';
+import { Constants } from 'expo';
+import { Provider, connect } from 'react-redux';
 
-  componentDidMount() {
+// Initialize Firebase
+firebase.initializeApp(Constants.manifest.extra.firebase);
 
-    return fetch('https://api.hsbc.com/open-banking/v2.2/branches')
-      .then((response) => response.json())
-      .then((responseJson) => {
+const INITIAL_STATE = {
+  geolocation: 0
+}
 
-        this.setState({
-          isLoading: false,
-          dataSource: responseJson.data,
-        }, function(){
-
-        });
-
-      })
-      .catch((error) =>{
-        console.error(error);
-      });
-  }
-
-  render() {
-    if(this.state.isLoading){
-     return(
-       <View style={{flex: 1, padding: 20}}>
-         <ActivityIndicator/>
-       </View>
-     )
-   }
-
-   return(
-     <View style={{flex: 1, paddingTop:20}}>
-
-       <FlatList
-         data={this.state.dataSource[0].Brand[0].Branch}
-         renderItem={({item}) => <Text>{item.Name}</Text>}
-         keyExtractor={item => item.Identification } />
-     </View>
-   );
+const reducer = (state, action) => {
+  console.log("  param:  " + JSON.stringify(action))
+  switch(action.type) {
+    case "map":
+      return { geolocation: action.geolocation }
+    default:
+      return state
   }
 }
 
-class HomeScreen extends Component {
-    render() {
-      return(
-        <SafeAreaView style={{ flex: 1 }}>
-          <View style={{ flex: 1 }}>
-            <StatusBar backgroundColor="#2EBD6B" barStyle="light-content" />
+const store = createStore( reducer, {} )
 
-            <View style={{ backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#CCCCCC' }}>
-              <SearchBar />
-            </View>
-          </View>
-        </SafeAreaView>
-      );
-    }
+const mapStateToProps = (state) => {
+  return { ...state }
 }
 
-export default createBottomTabNavigator ({
+const Nav = createBottomTabNavigator ({
     Home : {
       screen: HomeScreen,
       navigationOptions: {
@@ -94,8 +80,8 @@ export default createBottomTabNavigator ({
         )
       }
     },
-    ATM: {
-      screen: AtmComponent,
+    ATM : {
+      screen: AtmPanel,
       navigationOptions: {
         tabBarLabel: 'ATM',
         tabBarIcon: ({ tintColor })=> (
@@ -103,10 +89,10 @@ export default createBottomTabNavigator ({
         )
       }
     },
-    Messaging: {
-      screen: HomeScreen,
+    Map: {
+      screen: MapScreen,
       navigationOptions: {
-          tabBarLabel: 'MESSAGING',
+          tabBarLabel: 'MAP',
           tabBarIcon: ({ tintColor }) => (
             <Ionicons name="ios-mail" size={32} color={tintColor} />
           )
@@ -130,6 +116,63 @@ export default createBottomTabNavigator ({
         )
       }
     },
+});
+
+
+
+class App extends Component {
+  render() {
+    return(
+        <Nav />
+    );
+  }
+}
+
+export default class RootComponent extends Component {
+  render() {
+    return (
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+  }
+}
+
+/*
+
+// create our app's navigation stack
+const App = SwitchNavigator(
+  {
+    LoadingScreen,
+    HomeScreen,
+    SignupScreen,
+    LoginScreen
+    //SignUp,
+    //Login,
+    //Main
+  },
+  {
+    initialRouteName: 'LoadingScreen'
+  }
+)
+
+export default App;
+*/
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wrapper: {
+    flex: 1,
+    marginTop: 150,
+  },
+  submitButton: {
+    paddingHorizontal: 10,
+    paddingTop: 20,
+  },
 });
 
 
